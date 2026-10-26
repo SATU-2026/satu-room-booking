@@ -2,8 +2,8 @@
 // โหมด live จะใช้ข้อมูลจาก Supabase (เปลี่ยนผ่านหน้าแอดมิน)
 window.BOOKING_DATA = {
  campuses: [
-  {id:'rs',name:'ศูนย์รังสิต',short:'รังสิต',contact_name:'เจ้าหน้าที่ตัวอย่าง — รังสิต',contact_phone:'0X-XXX-XXXX'},
-  {id:'tp',name:'ศูนย์ท่าพระจันทร์',short:'ท่าพระจันทร์',contact_name:'เจ้าหน้าที่ตัวอย่าง — ท่าพระจันทร์',contact_phone:'0X-XXX-XXXX'}
+  {id:'rs',name:'ศูนย์รังสิต',short:'รังสิต',contact_name:'เจ้าหน้าที่ศูนย์รังสิต',contact_phone:'02-564-4440 ต่อ 82-1492 '},
+  {id:'tp',name:'ศูนย์ท่าพระจันทร์',short:'ท่าพระจันทร์',contact_name:'เจ้าหน้าที่ศูนย์ท่าพระจันทร์',contact_phone:'02-564-4440 ต่อ 82-1239'}
  ],
  rooms: [
   {id:'rs-a-glass',campus_id:'rs',name:'ลานใต้อาคาร A (ฝั่งหน้ากระจก)',capacity:null},
