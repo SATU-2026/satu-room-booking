@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto').webcrypto;
+const mem=new Map();const ctx={window:{},BookingCore:require('../core.js'),crypto,console,Date,Intl,JSON,navigator:{},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)}};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(__dirname+'/../data.js','utf8'),ctx);ctx.BOOKING_DATA=ctx.window.BOOKING_DATA;ctx.BOOKING_CONFIG={mode:'demo'};
+vm.runInContext(fs.readFileSync(__dirname+'/../api.js','utf8'),ctx);
+(async()=>{
+const a=new ctx.window.BookingAPI.Demo(),C=ctx.BookingCore,day=C.addDays(C.bangkokDate(),10),p={room_id:'rs-a205',starts_at:C.stamp(day,'09:00'),ends_at:C.stamp(day,'11:00'),fullname:'Test',phone:'0800000001',student_id:'DEMO',faculty:'test',group_name:'test',detail:'test',participants:20};
+const secret='a'.repeat(48),b=await a.create(p,'req-1',secret),again=await a.create(p,'req-1',secret);
+assert.equal(b.id,again.id);assert.equal((await a.lookup(p.phone)).length,1,'Retries must not create another booking');
+await assert.rejects(()=>a.create(p,'req-2',secret),/ห้องไม่ว่าง/);
+await assert.rejects(()=>a.get(b.id,'wrong'),/ไม่ถูกต้อง/);
+await a.login('staff-tp');await assert.rejects(()=>a.action(b.id,'cancel','test'),/ไม่มีสิทธิ์/);await assert.rejects(()=>a.staffList('rs'),/ไม่มีสิทธิ์/);
+await a.login('staff-rs');await assert.rejects(()=>a.action(b.id,'approve',''),/ไม่มีสิทธิ์/);await a.action(b.id,'review','review ok');
+await a.login('head');await a.action(b.id,'approve','approved');assert.equal((await a.get(b.id,secret)).status,'approved');
+await a.logout();await a.edit(b.id,secret,{detail:'changed',participants:21});assert.equal((await a.get(b.id,secret)).status,'pending');assert.equal((await a.get(b.id,secret)).room_id,'rs-a205');
+await a.login('staff-rs');await assert.rejects(()=>a.block({room_id:'rs-a205',starts_at:p.starts_at,ends_at:p.ends_at,reason:'repair'}),/รายการชน/);
+await a.logout();await a.cancel(b.id,secret,'cancel test');const replacement=await a.create(p,'req-3',secret);assert.notEqual(replacement.id,b.id);
+await a.login('staff-rs');await assert.rejects(()=>a.action(replacement.id,'reject',''),/เหตุผล/);await a.action(replacement.id,'reject','unsuitable');
+await a.block({room_id:'rs-a205',starts_at:p.starts_at,ends_at:p.ends_at,reason:'repair'});
+await a.logout();await assert.rejects(()=>a.create(p,'req-4',secret),/ห้องไม่ว่าง/);
+const publicEvents=await a.calendar('rs',C.stamp(day,'00:00'),C.stamp(C.addDays(day,1),'00:00'));assert.equal(publicEvents.length,1);assert(!('reason' in publicEvents[0]));
+assert(!('token' in (await a.get(b.id,secret))));
+console.log('PASS: demo create/retry/conflict, scope enforcement, approve/edit, cancellation releases room, room blocks, reason validation and redaction');
+})().catch(e=>{console.error(e);process.exitCode=1;});

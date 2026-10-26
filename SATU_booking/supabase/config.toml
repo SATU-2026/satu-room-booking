@@ -1,0 +1,3 @@
+[functions.booking-files]
+verify_jwt = false
+# Function verifies booking token or user JWT itself before service-role access.
